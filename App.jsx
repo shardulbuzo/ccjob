@@ -1,149 +1,114 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Bookmark, BookmarkCheck, LogIn, LogOut, Settings, X, ChevronDown, DollarSign, MapPin, Building2, Calendar, ExternalLink, Briefcase, Code, TrendingUp, Users, Zap, Globe } from 'lucide-react';
+import { Search, Bookmark, ExternalLink, X, LogIn, LogOut, Database, Plus, Trash2, ChevronLeft, ChevronRight, MapPin, DollarSign, Calendar, Building2 } from 'lucide-react';
 
-// Simulated job data with various ATS sources
-const INITIAL_JOBS = [
+// Sample data - Replace with API calls in production
+const INITIAL_JOBS = Array.from({ length: 50 }, (_, i) => ({
+  id: i + 1,
+  title: [
+    "Senior Blockchain Engineer",
+    "Head of Marketing",
+    "Enterprise Sales Manager",
+    "Smart Contract Developer",
+    "Product Designer",
+    "Growth Hacker",
+    "Security Engineer",
+    "Community Manager",
+    "Full Stack Engineer",
+    "Business Development Lead"
+  ][i % 10],
+  company_name: [
+    "Chainalysis",
+    "Fireblocks",
+    "Zero Hash",
+    "Crypto.com",
+    "IO Global",
+    "Uniswap Labs",
+    "Coinbase",
+    "Polygon",
+    "Alchemy",
+    "Circle"
+  ][i % 10],
+  company_id: (i % 10) + 1,
+  location: ["Remote", "New York, NY", "San Francisco, CA", "London, UK", "Singapore"][i % 5],
+  salary: i % 3 === 0 ? null : `$${100 + i * 2}k - $${150 + i * 3}k`,
+  sector: ["engineering", "marketing", "sales", "design", "operations"][i % 5],
+  description: "Join our team to build the future of Web3. We're looking for talented individuals passionate about decentralized technology.",
+  atsType: ["lever", "greenhouse", "ashby", "breezy", "workable"][i % 5],
+  jobUrl: `https://example.com/job${i + 1}`,
+  postedDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  skills: ["Solidity", "Rust", "React", "Node.js", "TypeScript", "Web3"].slice(0, Math.floor(Math.random() * 4) + 3)
+}));
+
+const INITIAL_COMPANIES = [
   {
     id: 1,
-    title: "Senior Blockchain Engineer",
-    company: "Chainalysis",
-    logo: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=100&h=100&fit=crop",
-    location: "Remote",
-    salary: "$150k - $220k",
-    sector: "engineering",
-    description: "Build scalable blockchain analytics infrastructure. Work with cutting-edge crypto protocols and large-scale data processing.",
-    atsType: "ashby",
-    jobUrl: "https://jobs.ashbyhq.com/chainalysis-careers/job123",
-    postedDate: "2026-01-30",
-    skills: ["Solidity", "Rust", "Blockchain", "Distributed Systems"],
-    requirements: "5+ years blockchain development experience"
+    name: "Chainalysis",
+    website_url: "https://chainalysis.com",
+    logo_url: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=100&h=100&fit=crop",
+    job_board_url: "https://jobs.ashbyhq.com/chainalysis-careers",
+    ats_type: "ashby",
+    active: true
   },
   {
     id: 2,
-    title: "Head of Marketing",
-    company: "Fireblocks",
-    logo: "https://images.unsplash.com/photo-1621504450181-5d356f61d307?w=100&h=100&fit=crop",
-    location: "New York, NY",
-    salary: "$180k - $250k",
-    sector: "marketing",
-    description: "Lead our global marketing strategy. Drive brand awareness and user acquisition in the institutional crypto space.",
-    atsType: "greenhouse",
-    jobUrl: "https://job-boards.greenhouse.io/fireblocks/job456",
-    postedDate: "2026-01-29",
-    skills: ["Growth Marketing", "B2B", "Crypto", "Team Leadership"],
-    requirements: "8+ years marketing experience in fintech or crypto"
+    name: "Fireblocks",
+    website_url: "https://fireblocks.com",
+    logo_url: "https://images.unsplash.com/photo-1621504450181-5d356f61d307?w=100&h=100&fit=crop",
+    job_board_url: "https://job-boards.greenhouse.io/fireblocks/",
+    ats_type: "greenhouse",
+    active: true
   },
   {
     id: 3,
-    title: "Enterprise Sales Manager",
-    company: "Zero Hash",
-    logo: "https://images.unsplash.com/photo-1605792657660-596af9009e82?w=100&h=100&fit=crop",
-    location: "San Francisco, CA",
-    salary: "$120k - $180k + commission",
-    sector: "sales",
-    description: "Close enterprise deals with financial institutions. Build relationships with CTOs and CFOs at major banks and fintechs.",
-    atsType: "breezy",
-    jobUrl: "https://zero-hash.breezy.hr/job789",
-    postedDate: "2026-01-28",
-    skills: ["Enterprise Sales", "B2B", "Fintech", "Crypto"],
-    requirements: "5+ years enterprise SaaS sales"
-  },
-  {
-    id: 4,
-    title: "Smart Contract Developer",
-    company: "Crypto.com",
-    logo: "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=100&h=100&fit=crop",
-    location: "Remote",
-    salary: "$140k - $200k",
-    sector: "engineering",
-    description: "Design and implement secure smart contracts for DeFi protocols. Audit and optimize existing contract architecture.",
-    atsType: "lever",
-    jobUrl: "https://jobs.lever.co/crypto/contract001",
-    postedDate: "2026-01-30",
-    skills: ["Solidity", "Security", "DeFi", "Web3.js"],
-    requirements: "3+ years smart contract development"
-  },
-  {
-    id: 5,
-    title: "Product Designer",
-    company: "IO Global",
-    logo: "https://images.unsplash.com/photo-1621504450181-5d356f61d307?w=100&h=100&fit=crop",
-    location: "Remote",
-    salary: "$110k - $160k",
-    sector: "design",
-    description: "Create beautiful, intuitive experiences for our blockchain products. Lead user research and design systems.",
-    atsType: "workable",
-    jobUrl: "https://apply.workable.com/io-global/design123",
-    postedDate: "2026-01-27",
-    skills: ["UI/UX", "Figma", "Design Systems", "Web3"],
-    requirements: "4+ years product design experience"
-  },
-  {
-    id: 6,
-    title: "Growth Hacker",
-    company: "Uniswap Labs",
-    logo: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=100&h=100&fit=crop",
-    location: "Remote",
-    salary: "$100k - $150k",
-    sector: "marketing",
-    description: "Drive user acquisition and engagement for our DeFi protocol. Run experiments, analyze data, and scale winning channels.",
-    atsType: "greenhouse",
-    jobUrl: "https://job-boards.greenhouse.io/uniswap/growth456",
-    postedDate: "2026-01-26",
-    skills: ["Growth Hacking", "Analytics", "DeFi", "A/B Testing"],
-    requirements: "3+ years growth marketing in tech"
+    name: "Zero Hash",
+    website_url: "https://zerohash.com",
+    logo_url: "https://images.unsplash.com/photo-1605792657660-596af9009e82?w=100&h=100&fit=crop",
+    job_board_url: "https://zero-hash.breezy.hr/",
+    ats_type: "breezy",
+    active: true
   }
 ];
 
 const SECTORS = [
-  { id: 'all', name: 'All Jobs', icon: Globe },
-  { id: 'engineering', name: 'Engineering', icon: Code },
-  { id: 'sales', name: 'Sales', icon: TrendingUp },
-  { id: 'marketing', name: 'Marketing', icon: Zap },
-  { id: 'design', name: 'Design', icon: Briefcase },
-  { id: 'operations', name: 'Operations', icon: Users }
+  { id: 'all', name: 'All Jobs' },
+  { id: 'engineering', name: 'Engineering' },
+  { id: 'sales', name: 'Sales' },
+  { id: 'marketing', name: 'Marketing' },
+  { id: 'design', name: 'Design' },
+  { id: 'operations', name: 'Operations' }
 ];
 
-const ATS_TYPES = {
-  lever: { name: 'Lever', color: '#00C4CC' },
-  greenhouse: { name: 'Greenhouse', color: '#4CAF50' },
-  ashby: { name: 'Ashby', color: '#9C27B0' },
-  breezy: { name: 'Breezy', color: '#FF5722' },
-  workable: { name: 'Workable', color: '#2196F3' }
-};
+const JOBS_PER_PAGE = 10;
 
-export default function Web3JobBoard() {
+export default function App() {
   const [jobs, setJobs] = useState(INITIAL_JOBS);
+  const [companies, setCompanies] = useState(INITIAL_COMPANIES);
   const [filteredJobs, setFilteredJobs] = useState(INITIAL_JOBS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSector, setSelectedSector] = useState('all');
-  const [selectedJob, setSelectedJob] = useState(null);
   const [savedJobs, setSavedJobs] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [user, setUser] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Load saved state from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('web3jobs_saved');
     const userData = localStorage.getItem('web3jobs_user');
-    const jobsData = localStorage.getItem('web3jobs_jobs');
+    const adminData = localStorage.getItem('web3jobs_superadmin');
     
     if (saved) setSavedJobs(JSON.parse(saved));
     if (userData) {
       setUser(JSON.parse(userData));
       setIsLoggedIn(true);
     }
-    if (jobsData) {
-      const storedJobs = JSON.parse(jobsData);
-      setJobs(storedJobs);
-      setFilteredJobs(storedJobs);
+    if (adminData) {
+      setIsSuperAdmin(true);
     }
   }, []);
 
-  // Filter jobs based on search and sector
   useEffect(() => {
     let filtered = jobs;
 
@@ -155,14 +120,20 @@ export default function Web3JobBoard() {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(job =>
         job.title.toLowerCase().includes(query) ||
-        job.company.toLowerCase().includes(query) ||
+        job.company_name.toLowerCase().includes(query) ||
         job.description.toLowerCase().includes(query) ||
-        job.skills.some(skill => skill.toLowerCase().includes(query))
+        job.skills?.some(skill => skill.toLowerCase().includes(query))
       );
     }
 
     setFilteredJobs(filtered);
+    setCurrentPage(1);
   }, [searchQuery, selectedSector, jobs]);
+
+  const totalPages = Math.ceil(filteredJobs.length / JOBS_PER_PAGE);
+  const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
+  const endIndex = startIndex + JOBS_PER_PAGE;
+  const currentJobs = filteredJobs.slice(startIndex, endIndex);
 
   const toggleSaveJob = (jobId) => {
     if (!isLoggedIn) {
@@ -178,78 +149,73 @@ export default function Web3JobBoard() {
     localStorage.setItem('web3jobs_saved', JSON.stringify(newSaved));
   };
 
-  const handleLogin = (provider) => {
+  const handleLogin = (email, password) => {
+    if (email === 'shardulbuzo@gmail.com' && password === 'birdisthewordA1$') {
+      const adminUser = {
+        name: 'Shardul (Admin)',
+        email: email,
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
+        isSuperAdmin: true
+      };
+      setUser(adminUser);
+      setIsLoggedIn(true);
+      setIsSuperAdmin(true);
+      setShowLogin(false);
+      localStorage.setItem('web3jobs_user', JSON.stringify(adminUser));
+      localStorage.setItem('web3jobs_superadmin', 'true');
+      return true;
+    }
+    return false;
+  };
+
+  const handleSocialLogin = (provider) => {
     const mockUser = {
-      name: provider === 'google' ? 'Alex Chen' : 'Jordan Smith',
-      email: provider === 'google' ? 'alex@gmail.com' : 'jordan@linkedin.com',
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}`
+      name: provider === 'google' ? 'John Doe' : 'Jane Smith',
+      email: provider === 'google' ? 'john@gmail.com' : 'jane@linkedin.com',
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}`,
+      isSuperAdmin: false
     };
     setUser(mockUser);
     setIsLoggedIn(true);
+    setIsSuperAdmin(false);
     setShowLogin(false);
     localStorage.setItem('web3jobs_user', JSON.stringify(mockUser));
+    
+    alert(`✅ Successfully signed in with ${provider === 'google' ? 'Google' : 'LinkedIn'}!\n\nWelcome, ${mockUser.name}!`);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setIsSuperAdmin(false);
     setUser(null);
     setSavedJobs([]);
     localStorage.removeItem('web3jobs_user');
+    localStorage.removeItem('web3jobs_superadmin');
     localStorage.removeItem('web3jobs_saved');
   };
 
-  return (
-    <div className="min-h-screen bg-[#0a0a0f] text-gray-100 font-['Space_Mono',monospace]">
-      {/* Animated background grid */}
-      <div className="fixed inset-0 opacity-20 pointer-events-none">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `
-            linear-gradient(to right, #00ffff11 1px, transparent 1px),
-            linear-gradient(to bottom, #00ffff11 1px, transparent 1px)
-          `,
-          backgroundSize: '50px 50px',
-          animation: 'gridMove 20s linear infinite'
-        }}></div>
-      </div>
+  const getCompanyLogo = (companyId) => {
+    const company = companies.find(c => c.id === companyId);
+    return company?.logo_url || 'https://via.placeholder.com/100';
+  };
 
-      <style>{`
-        @keyframes gridMove {
-          0% { transform: translate(0, 0); }
-          100% { transform: translate(50px, 50px); }
-        }
-        @keyframes glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
-          50% { box-shadow: 0 0 40px rgba(0, 255, 255, 0.6); }
-        }
-        @keyframes slideIn {
-          from { transform: translateY(-20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        .animate-slide-in {
-          animation: slideIn 0.5s ease-out;
-        }
-        .glow-border {
-          border: 1px solid rgba(0, 255, 255, 0.3);
-          box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
-        }
-        .glow-border:hover {
-          border-color: rgba(0, 255, 255, 0.6);
-          box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
-        }
-      `}</style>
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <div className="fixed inset-0 opacity-[0.03] pointer-events-none" style={{
+        backgroundImage: 'linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
+        backgroundSize: '50px 50px'
+      }}></div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#0a0a0f]/90 border-b border-cyan-500/20">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/80 border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center transform rotate-45">
-                <Zap className="w-6 h-6 text-white -rotate-45" />
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                <span className="text-black font-bold text-xl">W3</span>
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                  Web3 Jobs
-                </h1>
+                <h1 className="text-2xl font-bold text-white">Web3 Jobs</h1>
                 <p className="text-xs text-gray-500">Decentralized Careers</p>
               </div>
             </div>
@@ -257,22 +223,22 @@ export default function Web3JobBoard() {
             <div className="flex items-center space-x-4">
               {isLoggedIn ? (
                 <>
-                  <button
-                    onClick={() => setShowAdmin(true)}
-                    className="p-2 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 transition-all"
-                  >
-                    <Settings className="w-5 h-5 text-cyan-400" />
-                  </button>
-                  <div className="flex items-center space-x-3 bg-gray-800/50 rounded-lg px-3 py-2 border border-gray-700">
+                  {isSuperAdmin && (
+                    <button
+                      onClick={() => setShowAdmin(true)}
+                      className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white hover:bg-gray-800 transition-all"
+                    >
+                      <Database className="w-4 h-4" />
+                      <span className="font-medium">Admin Panel</span>
+                    </button>
+                  )}
+                  <div className="flex items-center space-x-3 bg-gray-900 rounded-lg px-3 py-2 border border-gray-800">
                     <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
                     <div className="hidden sm:block">
-                      <p className="text-sm font-medium">{user.name}</p>
+                      <p className="text-sm font-medium text-white">{user.name}</p>
                       <p className="text-xs text-gray-500">{savedJobs.length} saved</p>
                     </div>
-                    <button
-                      onClick={handleLogout}
-                      className="p-2 hover:bg-gray-700 rounded transition-colors"
-                    >
+                    <button onClick={handleLogout} className="p-2 hover:bg-gray-800 rounded transition-colors">
                       <LogOut className="w-4 h-4 text-gray-400" />
                     </button>
                   </div>
@@ -280,10 +246,10 @@ export default function Web3JobBoard() {
               ) : (
                 <button
                   onClick={() => setShowLogin(true)}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 transition-all transform hover:scale-105"
+                  className="flex items-center space-x-2 px-6 py-2 rounded-lg bg-white text-black hover:bg-gray-200 transition-all transform hover:scale-105 font-medium"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span className="font-medium">Sign In</span>
+                  <span>Sign In</span>
                 </button>
               )}
             </div>
@@ -294,333 +260,187 @@ export default function Web3JobBoard() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
         {/* Search and Filters */}
-        <div className="mb-8 space-y-4 animate-slide-in">
-          {/* Search Bar */}
+        <div className="mb-8 space-y-4">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-400" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
             <input
               type="text"
               placeholder="Search jobs, companies, skills..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-gray-900/50 border border-cyan-500/30 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all text-gray-100 placeholder-gray-500"
+              className="w-full pl-12 pr-4 py-4 bg-gray-900 border border-gray-800 rounded-lg focus:outline-none focus:border-white transition-all text-white placeholder-gray-500"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-700 rounded transition-colors"
-              >
-                <X className="w-4 h-4 text-gray-400" />
-              </button>
-            )}
           </div>
 
-          {/* Sector Filters */}
           <div className="flex flex-wrap gap-2">
-            {SECTORS.map((sector) => {
-              const Icon = sector.icon;
-              return (
-                <button
-                  key={sector.id}
-                  onClick={() => setSelectedSector(sector.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-all transform hover:scale-105 ${
-                    selectedSector === sector.id
-                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-400'
-                      : 'bg-gray-900/30 border-gray-700 text-gray-400 hover:border-gray-600'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-sm font-medium">{sector.name}</span>
-                </button>
-              );
-            })}
+            {SECTORS.map((sector) => (
+              <button
+                key={sector.id}
+                onClick={() => setSelectedSector(sector.id)}
+                className={`px-4 py-2 rounded-lg border transition-all ${
+                  selectedSector === sector.id
+                    ? 'bg-white text-black border-white'
+                    : 'bg-gray-900 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span className="text-sm font-medium">{sector.name}</span>
+              </button>
+            ))}
           </div>
 
-          {/* Results Count */}
           <div className="flex items-center justify-between text-sm text-gray-500">
             <p>{filteredJobs.length} opportunities found</p>
-            <p className="text-cyan-400">Updated daily via automated scraping</p>
+            <p className="text-gray-600">Showing {startIndex + 1}-{Math.min(endIndex, filteredJobs.length)} of {filteredJobs.length}</p>
           </div>
         </div>
 
         {/* Job Listings */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredJobs.map((job, index) => (
+        <div className="space-y-4 mb-8">
+          {currentJobs.map((job) => (
             <div
               key={job.id}
-              onClick={() => setSelectedJob(job)}
-              className="group relative bg-gray-900/40 backdrop-blur border border-gray-800 rounded-xl p-6 hover:border-cyan-500/50 transition-all cursor-pointer glow-border"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className="group relative bg-gray-950 border border-gray-800 rounded-lg p-6 hover:border-gray-600 transition-all"
             >
-              {/* ATS Badge */}
-              <div className="absolute top-4 right-4 flex items-center space-x-2">
-                <div
-                  className="px-2 py-1 rounded text-xs font-medium"
-                  style={{
-                    backgroundColor: `${ATS_TYPES[job.atsType]?.color}20`,
-                    color: ATS_TYPES[job.atsType]?.color
-                  }}
-                >
-                  {ATS_TYPES[job.atsType]?.name}
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSaveJob(job.id);
-                  }}
-                  className="p-2 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition-all transform hover:scale-110"
-                >
-                  {savedJobs.includes(job.id) ? (
-                    <BookmarkCheck className="w-5 h-5 text-cyan-400" />
-                  ) : (
-                    <Bookmark className="w-5 h-5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-
-              {/* Company Info */}
-              <div className="flex items-start space-x-4 mb-4">
-                <img
-                  src={job.logo}
-                  alt={job.company}
-                  className="w-14 h-14 rounded-lg object-cover border-2 border-gray-700"
-                />
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-cyan-400 group-hover:text-cyan-300 transition-colors mb-1">
-                    {job.title}
-                  </h3>
-                  <p className="text-gray-400 font-medium">{job.company}</p>
-                </div>
-              </div>
-
-              {/* Job Details */}
-              <div className="space-y-3 mb-4">
-                <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="w-4 h-4 text-cyan-500" />
-                    <span>{job.location}</span>
-                  </div>
-                  {job.salary && (
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4 text-green-500" />
-                      <span className="text-green-400 font-medium">{job.salary}</span>
+              <div className="flex items-start justify-between gap-6">
+                <div className="flex items-start space-x-4 flex-1">
+                  <img
+                    src={getCompanyLogo(job.company_id)}
+                    alt={job.company_name}
+                    className="w-16 h-16 rounded-lg object-cover border border-gray-800 flex-shrink-0 bg-gray-900"
+                  />
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-semibold text-white group-hover:text-gray-200 transition-colors mb-1">
+                      {job.title}
+                    </h3>
+                    <p className="text-gray-400 font-medium mb-3">{job.company_name}</p>
+                    
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-3">
+                      <div className="flex items-center space-x-1">
+                        <MapPin className="w-4 h-4" />
+                        <span>{job.location}</span>
+                      </div>
+                      {job.salary && (
+                        <div className="flex items-center space-x-1">
+                          <DollarSign className="w-4 h-4" />
+                          <span className="text-white font-medium">{job.salary}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(job.postedDate).toLocaleDateString()}</span>
+                      </div>
+                      <span className="px-2 py-1 rounded text-xs bg-gray-800 text-gray-400 border border-gray-700">
+                        {job.atsType}
+                      </span>
                     </div>
-                  )}
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="w-4 h-4 text-purple-500" />
-                    <span>{new Date(job.postedDate).toLocaleDateString()}</span>
+
+                    <p className="text-gray-400 text-sm mb-3">{job.description}</p>
+
+                    <div className="flex flex-wrap gap-2">
+                      {job.skills?.map((skill, idx) => (
+                        <span key={idx} className="px-2 py-1 text-xs rounded bg-gray-900 text-gray-300 border border-gray-800">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                <p className="text-gray-300 text-sm line-clamp-2">{job.description}</p>
+                <div className="flex flex-col items-end space-y-3">
+                  <button
+                    onClick={() => toggleSaveJob(job.id)}
+                    className="p-3 rounded-lg bg-gray-900 hover:bg-gray-800 border border-gray-800 transition-all"
+                  >
+                    <Bookmark className={`w-5 h-5 ${savedJobs.includes(job.id) ? 'fill-white' : ''}`} />
+                  </button>
 
-                {/* Skills */}
-                <div className="flex flex-wrap gap-2">
-                  {job.skills.slice(0, 4).map((skill, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-1 text-xs rounded bg-gray-800/50 text-cyan-300 border border-cyan-500/30"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* View Details Button */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-800">
-                <span className="text-xs text-gray-500 uppercase tracking-wider">
-                  {job.sector}
-                </span>
-                <div className="flex items-center space-x-2 text-cyan-400 group-hover:text-cyan-300 transition-colors">
-                  <span className="text-sm font-medium">View Details</span>
-                  <ExternalLink className="w-4 h-4" />
+                  <a
+                    href={job.jobUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 px-6 py-3 rounded-lg bg-white text-black hover:bg-gray-200 transition-all transform hover:scale-105 font-medium"
+                  >
+                    <span>View & Apply</span>
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center space-x-2 mt-8">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-2 rounded-lg bg-gray-900 border border-gray-800 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            {[...Array(totalPages)].map((_, i) => {
+              const page = i + 1;
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= currentPage - 1 && page <= currentPage + 1)
+              ) {
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-10 h-10 rounded-lg font-medium transition-all ${
+                      currentPage === page
+                        ? 'bg-white text-black'
+                        : 'bg-gray-900 border border-gray-800 text-gray-400 hover:bg-gray-800'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              } else if (page === currentPage - 2 || page === currentPage + 2) {
+                return <span key={page} className="text-gray-600">...</span>;
+              }
+              return null;
+            })}
+
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-lg bg-gray-900 border border-gray-800 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
         {filteredJobs.length === 0 && (
           <div className="text-center py-20">
-            <div className="w-20 h-20 mx-auto mb-4 bg-gray-800/50 rounded-full flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gray-900 rounded-full flex items-center justify-center border border-gray-800">
               <Search className="w-10 h-10 text-gray-600" />
             </div>
             <h3 className="text-xl font-bold text-gray-400 mb-2">No jobs found</h3>
-            <p className="text-gray-500">Try adjusting your search or filters</p>
+            <p className="text-gray-600">Try adjusting your search or filters</p>
           </div>
         )}
       </main>
 
-      {/* Job Detail Modal */}
-      {selectedJob && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-cyan-500/30 shadow-2xl">
-            <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-6 flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <img
-                  src={selectedJob.logo}
-                  alt={selectedJob.company}
-                  className="w-16 h-16 rounded-lg object-cover border-2 border-gray-700"
-                />
-                <div>
-                  <h2 className="text-2xl font-bold text-cyan-400">{selectedJob.title}</h2>
-                  <p className="text-gray-400">{selectedJob.company}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedJob(null)}
-                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6">
-              {/* Job Info Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center space-x-3 p-4 bg-gray-800/30 rounded-lg">
-                  <MapPin className="w-5 h-5 text-cyan-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">Location</p>
-                    <p className="text-sm font-medium">{selectedJob.location}</p>
-                  </div>
-                </div>
-                {selectedJob.salary && (
-                  <div className="flex items-center space-x-3 p-4 bg-gray-800/30 rounded-lg">
-                    <DollarSign className="w-5 h-5 text-green-400" />
-                    <div>
-                      <p className="text-xs text-gray-500">Compensation</p>
-                      <p className="text-sm font-medium text-green-400">{selectedJob.salary}</p>
-                    </div>
-                  </div>
-                )}
-                <div className="flex items-center space-x-3 p-4 bg-gray-800/30 rounded-lg">
-                  <Calendar className="w-5 h-5 text-purple-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">Posted</p>
-                    <p className="text-sm font-medium">{new Date(selectedJob.postedDate).toLocaleDateString()}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3 p-4 bg-gray-800/30 rounded-lg">
-                  <Building2 className="w-5 h-5 text-blue-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">ATS Platform</p>
-                    <p className="text-sm font-medium">{ATS_TYPES[selectedJob.atsType]?.name}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <h3 className="text-lg font-bold text-cyan-400 mb-3">About the Role</h3>
-                <p className="text-gray-300 leading-relaxed">{selectedJob.description}</p>
-              </div>
-
-              {/* Requirements */}
-              <div>
-                <h3 className="text-lg font-bold text-cyan-400 mb-3">Requirements</h3>
-                <p className="text-gray-300">{selectedJob.requirements}</p>
-              </div>
-
-              {/* Skills */}
-              <div>
-                <h3 className="text-lg font-bold text-cyan-400 mb-3">Required Skills</h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedJob.skills.map((skill, idx) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-2 text-sm rounded-lg bg-gray-800/50 text-cyan-300 border border-cyan-500/30"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex space-x-4 pt-6 border-t border-gray-800">
-                <button
-                  onClick={() => toggleSaveJob(selectedJob.id)}
-                  className={`flex-1 flex items-center justify-center space-x-2 px-6 py-3 rounded-lg border transition-all transform hover:scale-105 ${
-                    savedJobs.includes(selectedJob.id)
-                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-400'
-                      : 'bg-gray-800/50 border-gray-700 text-gray-300 hover:border-gray-600'
-                  }`}
-                >
-                  {savedJobs.includes(selectedJob.id) ? (
-                    <BookmarkCheck className="w-5 h-5" />
-                  ) : (
-                    <Bookmark className="w-5 h-5" />
-                  )}
-                  <span className="font-medium">
-                    {savedJobs.includes(selectedJob.id) ? 'Saved' : 'Save Job'}
-                  </span>
-                </button>
-                <a
-                  href={selectedJob.jobUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center space-x-2 px-6 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 transition-all transform hover:scale-105 font-medium"
-                >
-                  <span>Apply Now</span>
-                  <ExternalLink className="w-5 h-5" />
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Login Modal */}
       {showLogin && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-2xl max-w-md w-full p-8 border border-cyan-500/30 shadow-2xl animate-slide-in">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-cyan-400">Sign In</h2>
-              <button
-                onClick={() => setShowLogin(false)}
-                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
-            </div>
-
-            <p className="text-gray-400 mb-8">Sign in to save jobs and track applications</p>
-
-            <div className="space-y-4">
-              <button
-                onClick={() => handleLogin('google')}
-                className="w-full flex items-center justify-center space-x-3 px-6 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-all transform hover:scale-105 font-medium"
-              >
-                <svg className="w-6 h-6" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                <span>Continue with Google</span>
-              </button>
-
-              <button
-                onClick={() => handleLogin('linkedin')}
-                className="w-full flex items-center justify-center space-x-3 px-6 py-4 bg-[#0077B5] text-white rounded-lg hover:bg-[#006399] transition-all transform hover:scale-105 font-medium"
-              >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
-                <span>Continue with LinkedIn</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        <LoginModal
+          onClose={() => setShowLogin(false)}
+          onLogin={handleLogin}
+          onSocialLogin={handleSocialLogin}
+        />
       )}
 
-      {/* Admin Console Modal */}
-      {showAdmin && (
-        <AdminConsole
+      {showAdmin && isSuperAdmin && (
+        <SuperAdminPanel
+          companies={companies}
+          setCompanies={setCompanies}
           jobs={jobs}
-          setJobs={setJobs}
           onClose={() => setShowAdmin(false)}
         />
       )}
@@ -628,193 +448,303 @@ export default function Web3JobBoard() {
   );
 }
 
-// Admin Console Component
-function AdminConsole({ jobs, setJobs, onClose }) {
-  const [newJobBoard, setNewJobBoard] = useState({ url: '', company: '', logo: '' });
-  const [jobBoards, setJobBoards] = useState([
-    { id: 1, url: 'https://jobs.lever.co/crypto', company: 'Crypto.com', logo: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=100', atsType: 'lever', lastScraped: '2026-01-30' },
-    { id: 2, url: 'https://job-boards.greenhouse.io/fireblocks/', company: 'Fireblocks', logo: 'https://images.unsplash.com/photo-1621504450181-5d356f61d307?w=100', atsType: 'greenhouse', lastScraped: '2026-01-29' },
-    { id: 3, url: 'https://jobs.ashbyhq.com/chainalysis-careers', company: 'Chainalysis', logo: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=100', atsType: 'ashby', lastScraped: '2026-01-30' }
-  ]);
-  const [scraping, setScraping] = useState(false);
+function LoginModal({ onClose, onLogin, onSocialLogin }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const detectATS = (url) => {
-    if (url.includes('lever.co')) return 'lever';
-    if (url.includes('greenhouse.io')) return 'greenhouse';
-    if (url.includes('ashbyhq.com')) return 'ashby';
-    if (url.includes('breezy.hr')) return 'breezy';
-    if (url.includes('workable.com')) return 'workable';
-    return 'unknown';
-  };
-
-  const addJobBoard = () => {
-    if (newJobBoard.url && newJobBoard.company) {
-      const atsType = detectATS(newJobBoard.url);
-      const board = {
-        id: Date.now(),
-        ...newJobBoard,
-        atsType,
-        lastScraped: new Date().toISOString().split('T')[0]
-      };
-      setJobBoards([...jobBoards, board]);
-      setNewJobBoard({ url: '', company: '', logo: '' });
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const success = onLogin(email, password);
+    if (!success) {
+      setError('Invalid credentials. Only superadmin can login with email/password.');
     }
   };
 
-  const runScraper = async () => {
-    setScraping(true);
-    // Simulate scraping delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Simulate adding new jobs
-    const newJob = {
-      id: Date.now(),
-      title: "New Blockchain Position",
-      company: newJobBoard.company || "New Company",
-      logo: newJobBoard.logo || "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=100",
-      location: "Remote",
-      salary: "$120k - $180k",
-      sector: "engineering",
-      description: "Exciting new opportunity in the Web3 space.",
-      atsType: detectATS(newJobBoard.url),
-      jobUrl: newJobBoard.url,
-      postedDate: new Date().toISOString().split('T')[0],
-      skills: ["Web3", "Blockchain", "Smart Contracts"],
-      requirements: "Experience in blockchain development"
-    };
-    
-    setJobs([newJob, ...jobs]);
-    localStorage.setItem('web3jobs_jobs', JSON.stringify([newJob, ...jobs]));
-    setScraping(false);
-  };
-
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-gray-900 rounded-2xl max-w-5xl w-full my-8 border border-cyan-500/30 shadow-2xl">
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-cyan-400">Admin Console</h2>
-            <p className="text-gray-500 text-sm">Manage job board scrapers</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-          >
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-950 rounded-xl max-w-md w-full p-8 border border-gray-800 shadow-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-white">Sign In</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-900 rounded-lg transition-colors">
             <X className="w-6 h-6 text-gray-400" />
           </button>
         </div>
 
-        <div className="p-6 space-y-8">
-          {/* Add New Job Board */}
-          <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
-            <h3 className="text-lg font-bold text-cyan-400 mb-4">Add Job Board</h3>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Job Board URL (e.g., https://jobs.lever.co/company)"
-                value={newJobBoard.url}
-                onChange={(e) => setNewJobBoard({ ...newJobBoard, url: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-gray-100"
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Company Name"
-                  value={newJobBoard.company}
-                  onChange={(e) => setNewJobBoard({ ...newJobBoard, company: e.target.value })}
-                  className="px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-gray-100"
-                />
-                <input
-                  type="text"
-                  placeholder="Logo URL"
-                  value={newJobBoard.logo}
-                  onChange={(e) => setNewJobBoard({ ...newJobBoard, logo: e.target.value })}
-                  className="px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-gray-100"
-                />
-              </div>
-              {newJobBoard.url && (
-                <div className="flex items-center space-x-2 text-sm">
-                  <span className="text-gray-500">Detected ATS:</span>
-                  <span
-                    className="px-2 py-1 rounded font-medium"
-                    style={{
-                      backgroundColor: `${ATS_TYPES[detectATS(newJobBoard.url)]?.color}20`,
-                      color: ATS_TYPES[detectATS(newJobBoard.url)]?.color
-                    }}
-                  >
-                    {ATS_TYPES[detectATS(newJobBoard.url)]?.name || 'Unknown'}
-                  </span>
-                </div>
-              )}
-              <button
-                onClick={addJobBoard}
-                className="w-full px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-all font-medium"
-              >
-                Add Job Board
-              </button>
-            </div>
-          </div>
+        <p className="text-gray-400 mb-6">Sign in to save jobs and track applications</p>
 
-          {/* Active Job Boards */}
+        <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+          <input
+            type="email"
+            placeholder="Email (Superadmin only)"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg focus:outline-none focus:border-white text-white placeholder-gray-500"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg focus:outline-none focus:border-white text-white placeholder-gray-500"
+          />
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+          <button
+            type="submit"
+            className="w-full px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-all font-medium text-white"
+          >
+            Admin Login
+          </button>
+        </form>
+
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-800"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-gray-950 text-gray-500">Or continue with</span>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            onClick={() => onSocialLogin('google')}
+            className="w-full flex items-center justify-center space-x-3 px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition-all font-medium"
+          >
+            <span>Continue with Google</span>
+          </button>
+
+          <button
+            onClick={() => onSocialLogin('linkedin')}
+            className="w-full flex items-center justify-center space-x-3 px-6 py-3 bg-gray-900 border border-gray-800 text-white rounded-lg hover:bg-gray-800 transition-all font-medium"
+          >
+            <span>Continue with LinkedIn</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SuperAdminPanel({ companies, setCompanies, jobs, onClose }) {
+  const [activeTab, setActiveTab] = useState('companies');
+  const [newCompany, setNewCompany] = useState({
+    name: '',
+    website_url: '',
+    logo_url: '',
+    job_board_url: '',
+    ats_type: 'lever',
+    description: ''
+  });
+
+  const addCompany = () => {
+    if (!newCompany.name || !newCompany.job_board_url) {
+      alert('Please fill in at least Company Name and Job Board URL');
+      return;
+    }
+    
+    const company = {
+      ...newCompany,
+      id: Math.max(...companies.map(c => c.id), 0) + 1,
+      active: true
+    };
+    setCompanies([...companies, company]);
+    setNewCompany({
+      name: '',
+      website_url: '',
+      logo_url: '',
+      job_board_url: '',
+      ats_type: 'lever',
+      description: ''
+    });
+    alert(`✅ Company "${company.name}" added successfully!`);
+  };
+
+  const deleteCompany = (id) => {
+    if (window.confirm('Are you sure you want to delete this company?')) {
+      setCompanies(companies.map(c => 
+        c.id === id ? { ...c, active: false } : c
+      ));
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-gray-950 rounded-xl max-w-6xl w-full my-8 border border-gray-800 shadow-2xl">
+        <div className="sticky top-0 bg-gray-950 border-b border-gray-800 p-6 flex items-center justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-cyan-400">Active Job Boards ({jobBoards.length})</h3>
-              <button
-                onClick={runScraper}
-                disabled={scraping}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Zap className={`w-4 h-4 ${scraping ? 'animate-spin' : ''}`} />
-                <span>{scraping ? 'Scraping...' : 'Run Scraper Now'}</span>
-              </button>
-            </div>
+            <h2 className="text-2xl font-bold text-white">Superadmin Panel</h2>
+            <p className="text-gray-500 text-sm">Manage companies and view database</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-900 rounded-lg transition-colors">
+            <X className="w-6 h-6 text-gray-400" />
+          </button>
+        </div>
 
-            <div className="space-y-3">
-              {jobBoards.map((board) => (
-                <div key={board.id} className="flex items-center justify-between p-4 bg-gray-800/30 rounded-lg border border-gray-700">
-                  <div className="flex items-center space-x-4">
-                    <img src={board.logo} alt={board.company} className="w-12 h-12 rounded-lg object-cover" />
-                    <div>
-                      <p className="font-medium text-gray-200">{board.company}</p>
-                      <p className="text-sm text-gray-500 truncate max-w-md">{board.url}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div
-                      className="px-3 py-1 rounded text-sm font-medium"
-                      style={{
-                        backgroundColor: `${ATS_TYPES[board.atsType]?.color}20`,
-                        color: ATS_TYPES[board.atsType]?.color
-                      }}
-                    >
-                      {ATS_TYPES[board.atsType]?.name}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      Last scraped: {board.lastScraped}
-                    </div>
-                  </div>
+        <div className="p-6">
+          <div className="flex space-x-2 mb-6 border-b border-gray-800">
+            <button
+              onClick={() => setActiveTab('companies')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'companies'
+                  ? 'text-white border-b-2 border-white'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <Building2 className="w-4 h-4" />
+                <span>Companies ({companies.filter(c => c.active).length})</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('jobs')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'jobs'
+                  ? 'text-white border-b-2 border-white'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <Database className="w-4 h-4" />
+                <span>Jobs Database ({jobs.length})</span>
+              </div>
+            </button>
+          </div>
+
+          {activeTab === 'companies' && (
+            <div className="space-y-6">
+              <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+                <h3 className="text-lg font-bold text-white mb-4">Add New Company</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    placeholder="Company Name *"
+                    value={newCompany.name}
+                    onChange={(e) => setNewCompany({...newCompany, name: e.target.value})}
+                    className="px-4 py-3 bg-black border border-gray-800 rounded-lg focus:outline-none focus:border-white text-white placeholder-gray-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Website URL"
+                    value={newCompany.website_url}
+                    onChange={(e) => setNewCompany({...newCompany, website_url: e.target.value})}
+                    className="px-4 py-3 bg-black border border-gray-800 rounded-lg focus:outline-none focus:border-white text-white placeholder-gray-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Logo URL"
+                    value={newCompany.logo_url}
+                    onChange={(e) => setNewCompany({...newCompany, logo_url: e.target.value})}
+                    className="px-4 py-3 bg-black border border-gray-800 rounded-lg focus:outline-none focus:border-white text-white placeholder-gray-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Job Board URL *"
+                    value={newCompany.job_board_url}
+                    onChange={(e) => setNewCompany({...newCompany, job_board_url: e.target.value})}
+                    className="px-4 py-3 bg-black border border-gray-800 rounded-lg focus:outline-none focus:border-white text-white placeholder-gray-500"
+                  />
+                  <select
+                    value={newCompany.ats_type}
+                    onChange={(e) => setNewCompany({...newCompany, ats_type: e.target.value})}
+                    className="px-4 py-3 bg-black border border-gray-800 rounded-lg focus:outline-none focus:border-white text-white"
+                  >
+                    <option value="lever">Lever</option>
+                    <option value="greenhouse">Greenhouse</option>
+                    <option value="ashby">Ashby</option>
+                    <option value="breezy">Breezy</option>
+                    <option value="workable">Workable</option>
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Description"
+                    value={newCompany.description}
+                    onChange={(e) => setNewCompany({...newCompany, description: e.target.value})}
+                    className="px-4 py-3 bg-black border border-gray-800 rounded-lg focus:outline-none focus:border-white text-white placeholder-gray-500"
+                  />
                 </div>
-              ))}
-            </div>
-          </div>
+                <button
+                  onClick={addCompany}
+                  className="mt-4 w-full flex items-center justify-center space-x-2 px-6 py-3 bg-white text-black hover:bg-gray-200 rounded-lg transition-all font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Company</span>
+                </button>
+              </div>
 
-          {/* Scraper Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-xl p-6 border border-cyan-500/30">
-              <p className="text-sm text-gray-400 mb-2">Total Jobs</p>
-              <p className="text-3xl font-bold text-cyan-400">{jobs.length}</p>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-4">Active Companies</h3>
+                <div className="space-y-3">
+                  {companies.filter(c => c.active).map((company) => (
+                    <div key={company.id} className="flex items-center justify-between p-4 bg-gray-900 rounded-lg border border-gray-800">
+                      <div className="flex items-center space-x-4">
+                        {company.logo_url && (
+                          <img src={company.logo_url} alt={company.name} className="w-12 h-12 rounded-lg object-cover bg-black" />
+                        )}
+                        <div>
+                          <p className="font-medium text-white">{company.name}</p>
+                          <p className="text-sm text-gray-500">{company.job_board_url}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="px-3 py-1 rounded text-sm font-medium bg-gray-800 text-gray-400 border border-gray-700">
+                          {company.ats_type}
+                        </div>
+                        <button
+                          onClick={() => deleteCompany(company.id)}
+                          className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="bg-gradient-to-br from-green-500/20 to-emerald-600/20 rounded-xl p-6 border border-green-500/30">
-              <p className="text-sm text-gray-400 mb-2">New Today</p>
-              <p className="text-3xl font-bold text-green-400">
-                {jobs.filter(j => j.postedDate === new Date().toISOString().split('T')[0]).length}
-              </p>
+          )}
+
+          {activeTab === 'jobs' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+                  <p className="text-sm text-gray-400 mb-2">Total Jobs</p>
+                  <p className="text-3xl font-bold text-white">{jobs.length}</p>
+                </div>
+                <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+                  <p className="text-sm text-gray-400 mb-2">Active Companies</p>
+                  <p className="text-3xl font-bold text-white">{companies.filter(c => c.active).length}</p>
+                </div>
+                <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+                  <p className="text-sm text-gray-400 mb-2">Jobs This Month</p>
+                  <p className="text-3xl font-bold text-white">
+                    {jobs.filter(j => {
+                      const date = new Date(j.postedDate);
+                      const now = new Date();
+                      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                    }).length}
+                  </p>
+                </div>
+              </div>
+
+              <div className="max-h-96 overflow-y-auto space-y-2">
+                {jobs.slice(0, 20).map((job) => (
+                  <div key={job.id} className="p-4 bg-gray-900 rounded-lg border border-gray-800">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-white">{job.title}</p>
+                        <p className="text-sm text-gray-500">{job.company_name} • {job.location}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-400">{job.sector}</p>
+                        <p className="text-xs text-gray-600">{new Date(job.postedDate).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="bg-gradient-to-br from-purple-500/20 to-pink-600/20 rounded-xl p-6 border border-purple-500/30">
-              <p className="text-sm text-gray-400 mb-2">Active Boards</p>
-              <p className="text-3xl font-bold text-purple-400">{jobBoards.length}</p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
